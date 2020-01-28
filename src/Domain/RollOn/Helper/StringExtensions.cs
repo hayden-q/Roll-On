@@ -13,5 +13,17 @@ namespace RollOn
 
 			return string.Join(string.Empty, input.Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
 		}
+
+		public static int? TryParseNullable(this string input)
+		{
+			try
+			{
+				return int.Parse(input);
+			}
+			catch
+			{
+				return null;
+			}
+		}
 	}
 }

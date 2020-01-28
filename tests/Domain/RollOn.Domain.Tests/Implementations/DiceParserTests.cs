@@ -17,8 +17,8 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<ArgumentNullException>()
-				.WithMessage("*Expression must be set.*");
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Expression can't be null or whitespace.");
 		}
 
 		[Fact]
@@ -32,8 +32,8 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
-				.WithMessage("Expression can't be empty or whitespace.");
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Expression can't be null or whitespace.");
 		}
 		
 		[Fact]
@@ -47,7 +47,7 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
+			action.Should().Throw<InvalidDiceExpressionException>()
 				.WithMessage("Expression contains illegal character(s).");
 		}
 
@@ -62,7 +62,7 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
+			action.Should().Throw<InvalidDiceExpressionException>()
 				.WithMessage("Expression has too many open brackets.");
 		}
 
@@ -77,8 +77,8 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
-				.WithMessage("Expression has too many close brackets.");
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Expression contains bracket(s) which haven't been closed.");
 		}
 
 		[Theory]
@@ -123,7 +123,7 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
+			action.Should().Throw<InvalidDiceExpressionException>()
 				.WithMessage("Dice operator must be proceeded by number.");
 		}
 
@@ -153,38 +153,41 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
+			action.Should().Throw<InvalidDiceExpressionException>()
 				.WithMessage("Keep operator must be proceeded by number.");
 		}
 
-		[Fact]
-		public void Parse_KeepOperatorNoDiceOperatorPreceding_ThrowsException()
+		[Theory]
+		[InlineData("1k3")]
+		[InlineData("1d8k3 + 1k3")]
+		public void Parse_KeepOperatorNoDiceOperatorPreceding_ThrowsException(string parameter)
 		{
 			// Arrange
 			var parser = new DiceParser();
-			const string parameter = "1d8k3 + 1k3";
 
 			// Act
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
+			action.Should().Throw<InvalidDiceExpressionException>()
 				.WithMessage("Keep operator must be preceded by the Dice Operator.");
 		}
 
 		[Theory]
-		[InlineData("+1 + 2", "0 + 1 + 2")]
-		[InlineData("-1 + 2", "0 - 1 + 2")]
-		[InlineData("*1 + 2", "1 * 1 + 2")]
-		[InlineData("/1 + 2", "1 / 1 + 2")]
-		[InlineData("1 + 2 +", "1 + 2 + 0")]
-		[InlineData("1 + 2 -", "1 + 2 - 0")]
-		[InlineData("1 + 2 *", "1 + 2 * 1")]
-		[InlineData("1 + 2 /", "1 + 2 / 1")]
+		[InlineData("+1 + 2", "1 + 2")]
+		[InlineData("-1 + 2", "1 + 2")]
+		[InlineData("*1 + 2", "1 + 2")]
+		[InlineData("/1 + 2", "1 + 2")]
+		[InlineData("1 + 2 +", "1 + 2")]
+		[InlineData("1 + 2 -", "1 + 2")]
+		[InlineData("1 + 2 *", "1 + 2")]
+		[InlineData("1 + 2 /", "1 + 2")]
 		public void Parse_ValueHasOperatorsAtStart_ValueIsFormatted(string parameter, string expected)
 		{
-			// Arrange/Act
+			// Arrange
 			var parser = new DiceParser();
+
+			// Act
 			var expression = parser.Parse(parameter);
 
 			// Assert
@@ -196,8 +199,6 @@ namespace RollOn.Tests
 		[InlineData("1 +/ 2")]
 		[InlineData("1 */ 2")]
 		[InlineData("1 (/2)")]
-		[InlineData("d+")]
-		[InlineData("1d*")]
 		public void Parse_ValueHasIllegalSequentialTokens_ThrowsException(string parameter)
 		{
 			// Arrange
@@ -207,7 +208,7 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
+			action.Should().Throw<InvalidDiceExpressionException>()
 				.WithMessage("Dice Expression contains tokens which illegally follow one another.");
 		}
 
@@ -222,7 +223,7 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
+			action.Should().Throw<InvalidDiceExpressionException>()
 				.WithMessage("Expression contains empty bracket(s).");
 		}
 
@@ -237,7 +238,7 @@ namespace RollOn.Tests
 			Action action = () => parser.Parse(parameter);
 
 			// Assert
-			action.Should().Throw<InvalidExpressionException>()
+			action.Should().Throw<InvalidDiceExpressionException>()
 				.WithMessage("Expression contains bracket(s) which haven't been closed.");
 		}
 

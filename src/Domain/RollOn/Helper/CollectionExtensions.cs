@@ -1,10 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RollOn
 {
 	public static class CollectionExtensions
 	{
+		public static int? MaxOrNull(this IEnumerable<int> source)
+		{
+			if (!source.Any())
+			{
+				return null;
+			}
+
+			return source.Max();
+		}
+
 		public static void PushRange<T>(this Stack<T> source, IEnumerable<T> elements)
 		{
 			if (elements is null)
@@ -28,5 +39,7 @@ namespace RollOn
 				minIndex = input?.IndexOf(searchString, minIndex + searchString.Length, StringComparison.Ordinal) ?? -1;
 			}
 		}
+
+		public static bool In<T>(this T source, params T[] parameters) =>parameters.Contains(source);
 	}
 }

@@ -9,7 +9,8 @@ namespace RollOn
 	{
 		public INode Parse(string expression)
 		{
-			var formattedExpression = ValidateExpression(FormatExpression(expression));
+			var formattedExpression = FormatExpression(expression);
+			ValidateExpression(formattedExpression);
 			var postfix = ParseExpressionToPostfix(formattedExpression);
 			
 			return PostfixToNode(postfix);
@@ -23,51 +24,63 @@ namespace RollOn
 		private static IEnumerable<char> ValidMathOperators => ValidOperators.Concat(ValidBrackets);
 		private static IEnumerable<char> ValidOperatorTokens => ValidOperators.Concat(ValidDiceTokens);
 		
-		private static string ValidateExpression(string value)
+		private static void ValidateExpression(string value)
 		{
 			ValidateIllegalCharacters(value);
 			ValidateBrackets(value);
 			ValidateSequentialOperators(value);
 			ValidateDiceOperator(value);
-
-			return value;
 		}
-		private static void ValidateIllegalCharacters(string value)
-		{
-			if (value is null)
-			{
-				throw new ArgumentNullException(nameof(value), "Expression must be set.");
-			}
 
+		private static string FormatExpression(string value)
+		{
 			if (string.IsNullOrWhiteSpace(value))
 			{
-				throw new InvalidExpressionException("Expression can't be empty or whitespace.");
+				return value;
+			}
+
+			value = value
+				.Trim()
+				.ToUpper()
+				.RemoveWhitespace()
+				.Replace("+-", "-")
+				.Replace("-+", "-");
+
+			var tokenBuilder = new StringBuilder();
+
+			for (var index = 0; index < value.Length; index++)
+			{
+				if (ValidDiceTokens.Contains(value[index]) && !char.IsDigit(value[index - 1]) && value[index - 1] != ')')
+				{
+					tokenBuilder.Append($"1{value[index]}");
+				}
+				else if (!index.In(value.Length - 1, 0) || !ValidOperators.Contains(value[index]))
+				{
+					tokenBuilder.Append(value[index]);
+				}
+			}
+
+			return tokenBuilder.ToString();
+		}
+
+		private static void ValidateIllegalCharacters(string value)
+		{
+			if (string.IsNullOrWhiteSpace(value))
+			{
+				throw new InvalidDiceExpressionException("Expression can't be null or whitespace.");
 			}
 
 			if (value.Any(token => !char.IsDigit(token) && !ValidTokens.Contains(token)))
 			{
-				throw new InvalidExpressionException("Expression contains illegal character(s).");
+				throw new InvalidDiceExpressionException("Expression contains illegal character(s).");
 			}
 		}
 
 		private static void ValidateBrackets(string value)
 		{
-			var openBracketCount = value.Count(token => token == '(');
-			var closeBracketCount = value.Count(token => token == ')');
-
-			if (openBracketCount > closeBracketCount)
-			{
-				throw new InvalidExpressionException("Expression has too many open brackets.");
-			}
-
-			if (closeBracketCount > openBracketCount)
-			{
-				throw new InvalidExpressionException("Expression has too many close brackets.");
-			}
-
 			if (value.Contains("()"))
 			{
-				throw new InvalidExpressionException("Expression contains empty bracket(s).");
+				throw new InvalidDiceExpressionException("Expression contains empty bracket(s).");
 			}
 
 			var openBrackets = 0;
@@ -81,46 +94,13 @@ namespace RollOn
 
 				if (openBrackets < 0)
 				{
-					break;
+					throw new InvalidDiceExpressionException("Expression contains bracket(s) which haven't been closed.");
 				}
 			}
 
-			if (openBrackets < 0)
+			if (openBrackets > 0)
 			{
-				throw new InvalidExpressionException("Expression contains bracket(s) which haven't been closed.");
-			}
-		}
-
-		private static void ValidateDiceOperator(string value)
-		{
-			var diceIndexes = value.AllIndexesOf("D").ToArray();
-			var keepIndexes = value.AllIndexesOf("K").ToArray();
-
-			if (!diceIndexes.Any())
-			{
-				return;
-			}
-
-			if (diceIndexes.Any(index => index == value.Length - 1))
-			{
-				throw new InvalidExpressionException("Dice operator must be proceeded by number.");
-			}
-
-			foreach (var keepIndex in keepIndexes)
-			{
-				if (keepIndex == value.Length - 1)
-				{
-					throw new InvalidExpressionException("Keep operator must be proceeded by number.");
-				}
-
-				var diceIndex = diceIndexes
-					.Where(index => index + 1 <= keepIndex)
-					.Max();
-
-				if (!int.TryParse(value.Substring(diceIndex + 1, keepIndex - diceIndex - 1), out _))
-				{
-					throw new InvalidExpressionException("Keep operator must be preceded by the Dice operator.");
-				}
+				throw new InvalidDiceExpressionException("Expression has too many open brackets.");
 			}
 		}
 
@@ -130,12 +110,9 @@ namespace RollOn
 
 			foreach (var current in value.Skip(1))
 			{
-				var previousIsOperator = ValidTokens.Contains(previous);
-				var currentIsOperator = ValidOperators.Contains(current);
-
-				if (previousIsOperator && currentIsOperator && !ValidSequentialBrackets(previous, current))
+				if (ValidTokens.Contains(previous) && ValidOperators.Contains(current) && !ValidSequentialBrackets(previous, current))
 				{
-					throw new InvalidExpressionException("Dice Expression contains tokens which illegally follow one another.");
+					throw new InvalidDiceExpressionException("Dice Expression contains tokens which illegally follow one another.");
 				}
 
 				previous = current;
@@ -144,74 +121,36 @@ namespace RollOn
 
 		private static bool ValidSequentialBrackets(char previous, char current)
 		{
-			var open = ValidOperatorTokens.Contains(previous) && current == '(' ||  previous == '(' && current == '(';
+			var open = ValidOperatorTokens.Contains(previous) && current == '(' || previous == '(' && current == '(';
 			var close = ValidOperatorTokens.Contains(current) && previous == ')' || previous == ')' && current == ')';
 
 			return open || close;
 		}
 
-		private static string FormatExpression(string value)
+		private static void ValidateDiceOperator(string value)
 		{
-			if (string.IsNullOrWhiteSpace(value))
-			{
-				return value;
-			}
-			
-			value = value
-				.Trim()
-				.ToUpper()
-				.RemoveWhitespace()
-				.Replace("+-", "-")
-				.Replace("-+", "-");
+			var diceIndexes = value.AllIndexesOf("D").ToArray();
+			var keepIndexes = value.AllIndexesOf("K").ToArray();
 
-			var previous = value.First();
-			var tokenBuilder = new StringBuilder();
-
-			if (ValidOperators.Contains(previous))
+			if (diceIndexes.Any(index => index == value.Length - 1))
 			{
-				if (previous == '+' || previous == '-')
-				{
-					tokenBuilder.Append($"0{previous}");
-				}
-				else
-				{
-					tokenBuilder.Append($"1{previous}");
-				}
-			}
-			else
-			{
-				tokenBuilder.Append(previous.ToString());
+				throw new InvalidDiceExpressionException("Dice operator must be proceeded by number.");
 			}
 
-			foreach (var token in value.Skip(1))
+			foreach (var keepIndex in keepIndexes)
 			{
-				if (ValidDiceTokens.Contains(token) && !char.IsDigit(previous) && previous != ')')
+				if (keepIndex == value.Length - 1)
 				{
-					tokenBuilder.Append($"1{token}");
-				}
-				else
-				{
-					tokenBuilder.Append(token.ToString());
+					throw new InvalidDiceExpressionException("Keep operator must be proceeded by number.");
 				}
 
-				previous = token;
-			}
+				var diceIndex = diceIndexes.Where(index => index + 1 <= keepIndex).MaxOrNull();
 
-			if (!ValidOperators.Contains(previous))
-			{
-				return tokenBuilder.ToString();
+				if (!diceIndex.HasValue || !int.TryParse(value.Substring(diceIndex.Value + 1, keepIndex - diceIndex.Value - 1), out _))
+				{
+					throw new InvalidDiceExpressionException("Keep operator must be preceded by the Dice operator.");
+				}
 			}
-
-			if (previous == '+' || previous == '-')
-			{
-				tokenBuilder.Append("0");
-			}
-			else
-			{
-				tokenBuilder.Append("1");
-			}
-
-			return tokenBuilder.ToString();
 		}
 
 		private static IEnumerable<(string Term, IEnumerable<int> Id)> ParseExpressionToPostfix(string expression)
@@ -493,35 +432,31 @@ namespace RollOn
 
 			DieCount dieCount = null;
 			DieSize dieSize = null;
+			int? keep = null;
+
+			if (terms.Length == 3)
+			{
+				keep = terms[2].TryParseNullable();
+			}
 			
+			if (int.TryParse(terms[0], out var count))
+			{
+				dieCount = new DieCount(count, keep);
+			}
 			if (int.TryParse(terms[1], out var size))
 			{
 				dieSize = new DieSize(size);
 			}
 			
-			if (terms.Length == 3)
-			{
-				if (int.TryParse(terms[0], out var count) && int.TryParse(terms[2], out var keep))
-				{
-					dieCount = new DieCount(count, keep);
-				}
-			}
-			else
-			{
-				if (int.TryParse(terms[0], out var count))
-				{
-					dieCount = new DieCount(count);
-				}
-			}
-
 			if (dieCount != null && dieSize != null)
 			{
 				PushToStacks(new DiceNode(dieCount, dieSize), ref global, ref local);
 			}
 			else if (dieSize != null)
 			{
-				global.TryPop(out _);
-				PushToStacks(new DiceNode(local.Pop(), dieSize), ref global, ref local);
+				var countNode = local.Pop();
+				global.Pop();
+				PushToStacks(new DiceNode(countNode, dieSize), ref global, ref local);
 			}
 			else if (dieCount != null)
 			{
