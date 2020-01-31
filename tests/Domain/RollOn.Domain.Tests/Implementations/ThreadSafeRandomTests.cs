@@ -13,7 +13,7 @@ namespace RollOn.Tests
 			var min = 10;
 			var max = 0;
 			var random = new ThreadSafeRandom();
-			
+
 			// Act
 			for (var index = 0; index < iterations; index++)
 			{
@@ -28,7 +28,7 @@ namespace RollOn.Tests
 					min = result;
 				}
 			}
-			
+
 			// Assert
 			min.Should().BeGreaterOrEqualTo(1);
 			max.Should().BeLessOrEqualTo(3);

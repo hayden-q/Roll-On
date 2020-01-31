@@ -11,7 +11,7 @@ namespace RollOn
 		{
 			_random = new ThreadLocal<Random>(() => new Random(Guid.NewGuid().GetHashCode()));
 		}
-		
+
 		public int Next(int start, int endExclusive)
 		{
 			return _random.Value.Next(start, endExclusive);

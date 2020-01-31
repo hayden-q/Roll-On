@@ -11,7 +11,7 @@ namespace RollOn.Tests
 			var mockedNode = new Mock<INode>();
 
 			mockedNode
-				.Setup(node => node.Evaluate(It.IsAny<IRoller>(), It.IsAny<RoundingMode>()))
+				.Setup(node => node.Evaluate(It.IsAny<IRoller>()))
 				.Returns(new DiceResult(value, Enumerable.Empty<IEnumerable<DiceRoll>>()));
 
 			mockedNode

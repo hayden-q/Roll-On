@@ -5,45 +5,23 @@ namespace RollOn.Tests
 {
 	public class AverageRollerTests
 	{
-		[Theory]
-		[InlineData(4.0, 0)]
-		[InlineData(3.0, 1)]
-		[InlineData(4.0, 2)]
-		public void AverageRoller_RollWithoutKeep_ReturnsValidResult(double expectedValue, int roundingEnum)
+		[Fact]
+		public void AverageRoller_Rolls3d6_ReturnsAverageResult()
 		{
 			// Arrange
+			const int count = 3;
+			const double value = 3.5;
+			const int size = 6;
 			var roller = new AverageRoller();
 			var expected = new[]
 			{
-				new DiceRoll(expectedValue, 6),
-				new DiceRoll(expectedValue, 6),
-				new DiceRoll(expectedValue, 6),
+				new DiceRoll(value, size),
+				new DiceRoll(value, size),
+				new DiceRoll(value, size)
 			};
 
 			// Act
-			var actual = roller.Roll(3, 6, (RoundingMode)roundingEnum);
-
-			// Assert
-			actual.Should().BeEquivalentTo(expected);
-		}
-
-		[Theory]
-		[InlineData(4.0, 0)]
-		[InlineData(3.0, 1)]
-		[InlineData(4.0, 2)]
-		public void AverageRoller_RollWithKeep_ReturnsValidResult(double expectedValue, int roundingEnum)
-		{
-			// Arrange
-			var roller = new AverageRoller();
-			var expected = new[]
-			{
-				new DiceRoll(expectedValue, 6),
-				new DiceRoll(expectedValue, 6),
-				new DiceRoll(expectedValue, 6),
-			};
-
-			// Act
-			var actual = roller.Roll(new DieCount(4, 3), 6, (RoundingMode)roundingEnum);
+			var actual = roller.Roll(count, size);
 
 			// Assert
 			actual.Should().BeEquivalentTo(expected);

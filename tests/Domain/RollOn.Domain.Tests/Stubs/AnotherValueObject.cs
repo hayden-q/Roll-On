@@ -4,8 +4,6 @@ namespace RollOn.Tests
 {
 	public sealed class AnotherValueObject : ValueObject
 	{
-		public string First { get;  }
-		public string Second { get;  }
 		private readonly bool _useNull;
 
 		public AnotherValueObject(string first, string second, bool useNull = false)
@@ -14,6 +12,9 @@ namespace RollOn.Tests
 			Second = second;
 			_useNull = useNull;
 		}
+
+		public string First { get; }
+		public string Second { get; }
 
 		protected override IEnumerable<object> GetAtomicValues()
 		{

@@ -10,24 +10,22 @@ namespace RollOn
 		public RandomRoller() : this(new ThreadSafeRandom())
 		{
 		}
-		
+
 		public RandomRoller(IRandom random)
 		{
 			_random = random;
 		}
-		
-		public IEnumerable<DiceRoll> Roll(DieCount count, DieSize size, RoundingMode roundingMode)
+
+		public IEnumerable<DiceRoll> Roll(int count, int size)
 		{
 			var rolls = new List<DiceRoll>();
 
-			for (var index = 0; index < count.Count; index++)
+			for (var index = 0; index < count; index++)
 			{
-				rolls.Add(new DiceRoll(_random.Next(1, size.Value + 1), size));
+				rolls.Add(new DiceRoll(_random.Next(1, size + 1), size));
 			}
 
-			return rolls
-				.OrderByDescending(roll => roll.Value)
-				.Take(count.Keep ?? count.Count);
+			return rolls.OrderByDescending(roll => roll.Value);
 		}
 	}
 }

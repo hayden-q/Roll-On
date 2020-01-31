@@ -7,43 +7,22 @@ namespace RollOn.Tests
 	public class RandomRollerTests
 	{
 		[Fact]
-		public void RandomRoller_RollWithoutKeep_ReturnsValidResult()
+		public void RandomRoller_Rolls3d6_ReturnsMockedRandomResult()
 		{
 			// Arrange
-			const int max = 6;
 			const int count = 3;
-			var roller = new RandomRoller(MockHelper.CreateMockedRandom(max).Object);
+			const int value = 6;
+			const int size = 6;
+			var roller = new RandomRoller(MockHelper.CreateMockedRandom(value).Object);
 			var expected = new[]
 			{
-				new DiceRoll(max, max),
-				new DiceRoll(max, max),
-				new DiceRoll(max, max),
+				new DiceRoll(value, size),
+				new DiceRoll(value, size),
+				new DiceRoll(value, size)
 			};
 
 			// Act
-			var actual = roller.Roll(count, max, RoundingMode.Default).ToArray();
-
-			// Assert
-			actual.Should().BeEquivalentTo(expected);
-		}
-
-		[Fact]
-		public void RandomRoller_RollWithKeep_ReturnsValidResult()
-		{
-			// Arrange
-			const int max = 6;
-			const int count = 4;
-			const int keep = 3;
-			var roller = new RandomRoller(MockHelper.CreateMockedRandom(max).Object);
-			var expected = new[]
-			{
-				new DiceRoll(max, max),
-				new DiceRoll(max, max),
-				new DiceRoll(max, max),
-			};
-
-			// Act
-			var actual = roller.Roll(new DieCount(count, keep), max, RoundingMode.Default).ToArray();
+			var actual = roller.Roll(count, size).ToArray();
 
 			// Assert
 			actual.Should().BeEquivalentTo(expected);

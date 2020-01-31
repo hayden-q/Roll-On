@@ -6,17 +6,16 @@ namespace RollOn
 {
 	public class NumberNode : ValueObject, INode
 	{
-		public double Value { get; }
-		
-		public NumberNode(double value) => Value = value;
-
-		public DiceResult Evaluate(IRoller roller, RoundingMode roundingMode)
+		public NumberNode(double value)
 		{
-			return new DiceResult(Value, Enumerable.Empty<IEnumerable<DiceRoll>>());
+			Value = value;
 		}
 
+		public double Value { get; }
+
+		public DiceResult Evaluate(IRoller roller) => new DiceResult(Value, Enumerable.Empty<IEnumerable<DiceRoll>>());
 		public override string ToString() => Value.ToString(CultureInfo.InvariantCulture);
-		
+
 		protected override IEnumerable<object> GetAtomicValues()
 		{
 			yield return Value;

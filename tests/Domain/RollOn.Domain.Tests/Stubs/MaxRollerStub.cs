@@ -5,19 +5,16 @@ namespace RollOn.Tests
 {
 	public class MaxRollerStub : IRoller
 	{
-		
-		public IEnumerable<DiceRoll> Roll(DieCount count, DieSize size, RoundingMode roundingMode)
+		public IEnumerable<DiceRoll> Roll(int count, int size)
 		{
 			var results = new List<DiceRoll>();
-			
-			for (var index = 0; index < count.Count; index++)
-			{ 
-				results.Add(new DiceRoll(size.Value, size));	
+
+			for (var index = 0; index < count; index++)
+			{
+				results.Add(new DiceRoll(size, size));
 			}
 
-			return results
-				.OrderByDescending(roll => roll.Value)
-				.Take(count.Keep ?? count.Count);
+			return results.OrderByDescending(roll => roll.Value);
 		}
 	}
 }

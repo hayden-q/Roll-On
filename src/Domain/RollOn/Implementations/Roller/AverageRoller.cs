@@ -4,12 +4,11 @@ namespace RollOn
 {
 	public class AverageRoller : IRoller
 	{
-		public IEnumerable<DiceRoll> Roll(DieCount count, DieSize size, RoundingMode roundingMode)
+		public IEnumerable<DiceRoll> Roll(int count, int size)
 		{
-			var maxIndex = count.Keep ?? count.Count;
-			var average = ((size + 1) / 2.0).Round(roundingMode);
+			var average = (size + 1) / 2.0;
 
-			for (var index = 0; index < maxIndex; index++)
+			for (var index = 0; index < count; index++)
 			{
 				yield return new DiceRoll(average, size);
 			}

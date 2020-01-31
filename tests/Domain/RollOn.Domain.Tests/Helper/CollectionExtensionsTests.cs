@@ -15,7 +15,7 @@ namespace RollOn.Tests
 		{
 			// Act
 			var sut = input.AllIndexesOf(searchString);
-			
+
 			// Assert
 			sut.Should().BeEquivalentTo(indexes);
 		}
@@ -24,11 +24,11 @@ namespace RollOn.Tests
 		public void PushRange_InputIsNull_PushesNoElements()
 		{
 			// Arrange
-			Stack<int> sut = new Stack<int>();
-			
+			var sut = new Stack<int>();
+
 			// Act
 			sut.PushRange(null);
-			
+
 			// Assert
 			sut.Should().BeEmpty();
 		}
@@ -39,10 +39,10 @@ namespace RollOn.Tests
 			// Arrange
 			var sut = new Stack<int>();
 			var inputs = new[] {1, 2, 3, 4, 5};
-			
+
 			// Act
 			sut.PushRange(inputs);
-			
+
 			// Assert
 			sut.Should().BeEquivalentTo(inputs.OrderByDescending(x => x));
 		}

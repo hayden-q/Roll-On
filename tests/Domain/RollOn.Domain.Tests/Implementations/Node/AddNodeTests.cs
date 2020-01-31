@@ -11,29 +11,29 @@ namespace RollOn.Tests
 		{
 			// Arrange
 			var parameter = MockHelper.CreateMockedNode(10).Object;
-			
+
 			// Act
 			Action sut = () => new AddNode(null, parameter);
-			
+
 			// Assert
 			sut.Should().Throw<ArgumentNullException>()
 				.WithMessage("*Node must be set.*");
 		}
-		
+
 		[Fact]
 		public void AddNode_SecondParameterNull_ThrowsException()
 		{
 			// Arrange
 			var parameter = MockHelper.CreateMockedNode(10).Object;
-			
+
 			// Act
 			Action sut = () => new AddNode(parameter, null);
-			
+
 			// Assert
 			sut.Should().Throw<ArgumentNullException>()
 				.WithMessage("*Node must be set.*");
 		}
-		
+
 		[Fact]
 		public void Evaluate_ValidNode_ReturnsNumber()
 		{
@@ -43,7 +43,7 @@ namespace RollOn.Tests
 			var node = new AddNode(valueNode, valueNode);
 
 			// Act
-			var result = node.Evaluate(new MaxRollerStub(), RoundingMode.Default);
+			var result = node.Evaluate(new MaxRollerStub());
 
 			// Assert
 			result.Value.Should().Be(value + value);
@@ -56,10 +56,10 @@ namespace RollOn.Tests
 			const int value = 10;
 			var valueNode = MockHelper.CreateMockedNode(value).Object;
 			var node = new AddNode(valueNode, valueNode);
-			
+
 			// Act
 			var result = node.ToString();
-			
+
 			// Assert
 			result.Should().Be($"{value} + {value}");
 		}

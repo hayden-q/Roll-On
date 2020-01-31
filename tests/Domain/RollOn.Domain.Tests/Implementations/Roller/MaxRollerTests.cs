@@ -6,38 +6,22 @@ namespace RollOn.Tests
 	public class MaxRollerTests
 	{
 		[Fact]
-		public void MaxRoller_RollWithoutKeep_ReturnsValidResult()
+		public void MaxRoller_Rolls3d6_Returns18Result()
 		{
 			// Arrange
+			const int count = 3;
+			const double value = 6;
+			const int size = 6;
 			var roller = new MaxRoller();
 			var expected = new[]
 			{
-				new DiceRoll(6, 6),
-				new DiceRoll(6, 6),
-				new DiceRoll(6, 6),
+				new DiceRoll(value, size),
+				new DiceRoll(value, size),
+				new DiceRoll(value, size)
 			};
 
 			// Act
-			var actual = roller.Roll(3, 6, RoundingMode.Default);
-
-			// Assert
-			actual.Should().BeEquivalentTo(expected);
-		}
-
-		[Fact]
-		public void MaxRoller_RollWithKeep_ReturnsValidResult()
-		{
-			// Arrange
-			var roller = new MaxRoller();
-			var expected = new[]
-			{
-				new DiceRoll(6, 6),
-				new DiceRoll(6, 6),
-				new DiceRoll(6, 6),
-			};
-
-			// Act
-			var actual = roller.Roll(new DieCount(4, 3), 6, RoundingMode.Default);
+			var actual = roller.Roll(count, size);
 
 			// Assert
 			actual.Should().BeEquivalentTo(expected);

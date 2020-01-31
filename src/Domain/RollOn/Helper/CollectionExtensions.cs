@@ -22,13 +22,13 @@ namespace RollOn
 			{
 				return;
 			}
-			
+
 			foreach (var element in elements)
 			{
 				source.Push(element);
 			}
 		}
-		
+
 		public static IEnumerable<int> AllIndexesOf(this string input, string searchString)
 		{
 			var minIndex = input?.IndexOf(searchString, StringComparison.Ordinal) ?? -1;
@@ -40,6 +40,14 @@ namespace RollOn
 			}
 		}
 
-		public static bool In<T>(this T source, params T[] parameters) =>parameters.Contains(source);
+		public static bool In<T>(this T source, params T[] parameters)
+		{
+			return parameters.Contains(source);
+		}
+
+		public static bool In<T>(this T source, IEnumerable<T> parameters)
+		{
+			return parameters.Contains(source);
+		}
 	}
 }

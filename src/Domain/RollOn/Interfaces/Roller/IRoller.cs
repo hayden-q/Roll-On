@@ -4,6 +4,6 @@ namespace RollOn
 {
 	public interface IRoller
 	{
-		IEnumerable<DiceRoll> Roll(DieCount count, DieSize size, RoundingMode roundingMode);
+		IEnumerable<DiceRoll> Roll(int count, int size);
 	}
 }

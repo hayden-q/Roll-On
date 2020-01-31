@@ -11,9 +11,9 @@ namespace RollOn.Tests
 			// Arrange
 			const int parameter = 10;
 			var node = new NumberNode(parameter);
-			
+
 			// Act
-			var result = node.Evaluate(new MaxRollerStub(), RoundingMode.Default);
+			var result = node.Evaluate(new MaxRollerStub());
 
 			// Assert
 			result.Value.Should().Be(parameter);
@@ -25,10 +25,10 @@ namespace RollOn.Tests
 			// Arrange
 			const int parameter = 10;
 			var node = new NumberNode(parameter);
-			
+
 			// Act
 			var result = node.ToString();
-			
+
 			// Assert
 			result.Should().Be(parameter.ToString());
 		}
