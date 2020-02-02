@@ -14,7 +14,7 @@ namespace RollOn
 		public INode First { get; }
 		public INode Second { get; }
 
-		public DiceResult Evaluate(IRoller roller) => First.Evaluate(roller) / Second.Evaluate(roller);
+		public DiceResult Evaluate(IRoller roller, IVariableInjector variableInjector) => First.Evaluate(roller, variableInjector) / Second.Evaluate(roller, variableInjector);
 		public override string ToString() => $"{First} / {Second}";
 
 		protected override IEnumerable<object> GetAtomicValues()

@@ -18,11 +18,11 @@ namespace RollOn
 		}
 	}
 
-	public class ConstantToken : Token
+	public class NumberToken : Token
 	{
 		public double Constant { get; }
 
-		public ConstantToken(string value) : base(value)
+		public NumberToken(string value) : base(value)
 		{
 			if (!double.TryParse(value, out var constant))
 			{
@@ -30,6 +30,13 @@ namespace RollOn
 			}
 
 			Constant = constant;
+		}
+	}
+
+	public class VariableToken : Token
+	{
+		public VariableToken(string value) : base(value)
+		{
 		}
 	}
 
@@ -52,15 +59,12 @@ namespace RollOn
 		protected OperatorToken(string value) : base(value)
 		{
 		}
-		
-		public int Precedence { get; protected set; }
 	}
 
 	public class AddToken : OperatorToken
 	{
 		public AddToken() : base("+")
 		{
-			Precedence = 1;
 		}
 	}
 
@@ -68,7 +72,6 @@ namespace RollOn
 	{
 		public SubtractToken() : base("-")
 		{
-			Precedence = 1;
 		}
 	}
 
@@ -76,7 +79,6 @@ namespace RollOn
 	{
 		public MultiplyToken() : base("*")
 		{
-			Precedence = 2;
 		}
 	}
 
@@ -84,7 +86,6 @@ namespace RollOn
 	{
 		public DivideToken() : base("/")
 		{
-			Precedence = 2;
 		}
 	}
 
@@ -92,7 +93,13 @@ namespace RollOn
 	{
 		public DiceToken() : base("D")
 		{
-			Precedence = 3;
+		}
+	}
+
+	public class KeepToken : OperatorToken
+	{
+		public KeepToken() : base("K")
+		{
 		}
 	}
 }

@@ -20,9 +20,12 @@ namespace RollOn
 		{
 			var rolls = new List<DiceRoll>();
 
-			for (var index = 0; index < count; index++)
+			var countSign = (count < 0) ? -1 : 1;
+			var sizeSign = (size < 0) ? -1 : 1;
+
+			for (var index = 0; index < count * countSign; index++)
 			{
-				rolls.Add(new DiceRoll(_random.Next(1, size + 1), size));
+				rolls.Add(new DiceRoll(sizeSign * _random.Next(1, (size * sizeSign) + 1), size));
 			}
 
 			return rolls.OrderByDescending(roll => roll.Value);

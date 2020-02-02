@@ -20,6 +20,8 @@ namespace RollOn
 				{ '/', tokens => {tokens.Add(new DivideToken());} },
 				{ 'D', tokens => {tokens.Add(new DiceToken());} },
 				{ 'd', tokens => {tokens.Add(new DiceToken());} },
+				{ 'K', tokens => {tokens.Add(new KeepToken());} },
+				{ 'k', tokens => {tokens.Add(new KeepToken());} },
 				{ '(', tokens => {tokens.Add(new OpenParenthesisToken());} },
 				{ ')', tokens => {tokens.Add(new CloseParenthesisToken());} },
 			};
@@ -40,7 +42,11 @@ namespace RollOn
 				}
 				else if (char.IsDigit(character) || character == '.')
 				{
-					tokens.Add(new ConstantToken(ParseNumber()));
+					tokens.Add(new NumberToken(ParseNumber()));
+				}
+				else if (character == '{')
+				{
+					tokens.Add(new VariableToken(ParseVariable()));
 				}
 				else if (_operators.ContainsKey(character))
 				{
@@ -54,6 +60,39 @@ namespace RollOn
 			}
 
 			return tokens;
+		}
+
+		private string ParseVariable()
+		{
+			var builder = new StringBuilder();
+			var hasClosedBrackets = false;
+			
+			// Skip {
+			_reader.Read();
+			var nextCharacter = (char) _reader.Peek();
+			hasClosedBrackets = nextCharacter == '}';
+			while (!hasClosedBrackets && _reader.Peek() != -1)
+			{
+				var character = (char) _reader.Read();
+				builder.Append(character);
+				nextCharacter = (char) _reader.Peek();
+				hasClosedBrackets = nextCharacter == '}';
+			}
+
+			if (!hasClosedBrackets)
+			{
+				throw new InvalidDiceExpressionException("Variable name doesn't have closed brackets.");
+			}
+
+			if (builder.ToString().Trim() == string.Empty)
+			{
+				throw new InvalidDiceExpressionException("Variable name cannot be empty");
+			}
+
+			// Skip }
+			_reader.Read();
+
+			return builder.ToString();
 		}
 
 		private string ParseNumber()

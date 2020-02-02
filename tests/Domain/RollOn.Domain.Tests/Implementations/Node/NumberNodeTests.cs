@@ -13,7 +13,7 @@ namespace RollOn.Tests
 			var node = new NumberNode(parameter);
 
 			// Act
-			var result = node.Evaluate(new MaxRollerStub());
+			var result = node.Evaluate(new MaxRollerStub(), MockHelper.CreateMockedInjector().Object);
 
 			// Assert
 			result.Value.Should().Be(parameter);

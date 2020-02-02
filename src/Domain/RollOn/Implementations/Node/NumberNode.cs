@@ -13,7 +13,7 @@ namespace RollOn
 
 		public double Value { get; }
 
-		public DiceResult Evaluate(IRoller roller) => new DiceResult(Value, Enumerable.Empty<IEnumerable<DiceRoll>>());
+		public DiceResult Evaluate(IRoller roller, IVariableInjector variableInjector) => new DiceResult(Value, Enumerable.Empty<IEnumerable<DiceRoll>>());
 		public override string ToString() => Value.ToString(CultureInfo.InvariantCulture);
 
 		protected override IEnumerable<object> GetAtomicValues()

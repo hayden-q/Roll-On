@@ -8,23 +8,26 @@ namespace RollOn
 	{
 		private bool _hasNext = true;
 		private readonly IExpressionTokenizer _tokenizer;
+		private readonly INodeFactory _nodeFactory;
 		private readonly Dictionary<Type, Func<INode, INode, INode>> _nodeMapper;
 		
-		public DiceParser() : this(new ExpressionTokenizer())
+		public DiceParser() : this(new ExpressionTokenizer(), new NodeFactory())
 		{
 		}
 
-		public DiceParser(IExpressionTokenizer tokenizer)
+		public DiceParser(IExpressionTokenizer tokenizer, INodeFactory nodeFactory)
 		{
 			_tokenizer = tokenizer;
-			
+			_nodeFactory = nodeFactory;
+
 			_nodeMapper = new Dictionary<Type, Func<INode, INode, INode>>
 			{
-				{typeof(AddToken), (left, right) => new AddNode(left, right)},
-				{typeof(SubtractToken), (left, right) => new SubtractNode(left, right)},
-				{typeof(MultiplyToken), (left, right) => new MultiplyNode(left, right)},
-				{typeof(DivideToken), (left, right) => new DivideNode(left, right)},
-				{typeof(DiceToken), (left, right) => new DiceNode(left, right)},
+				{typeof(AddToken), (left, right) => _nodeFactory.CreateAdd(left, right)},
+				{typeof(SubtractToken), (left, right) => _nodeFactory.CreateSubtract(left, right)},
+				{typeof(MultiplyToken), (left, right) => _nodeFactory.CreateMultiply(left, right)},
+				{typeof(DivideToken), (left, right) => _nodeFactory.CreateDivide(left, right)},
+				{typeof(DiceToken), (left, right) => _nodeFactory.CreateDice(left, right)},
+				{typeof(KeepToken), (left, right) => _nodeFactory.CreateKeep(left as IDiceNode, right)},
 			};
 		}
 
@@ -81,14 +84,12 @@ namespace RollOn
 					return leftNode;
 				}
 
-				if (currentOperator != null)
-				{
-					leftNode = _nodeMapper[currentOperator].Invoke(leftNode, rightNode);
-				}
-				else
+				if (currentOperator is null)
 				{
 					throw new InvalidDiceExpressionException("Cannot get type of operator");
 				}
+
+				leftNode = _nodeMapper[currentOperator].Invoke(leftNode, rightNode);
 			}
 
 			return leftNode;
@@ -96,7 +97,7 @@ namespace RollOn
 
 		private INode ParseMultiplyDivide(IEnumerator<Token> tokens)
 		{
-			var leftNode = ParseDice(tokens);
+			var leftNode = ParseDiceKeep(tokens);
 
 			while (_hasNext)
 			{
@@ -110,30 +111,27 @@ namespace RollOn
 				if (tokens.Current is MultiplyToken || tokens.Current is DivideToken)
 				{
 					MoveNext(tokens);
-					rightNode = ParseDice(tokens);
+					rightNode = ParseDiceKeep(tokens);
 				}
 				else
 				{
 					return leftNode;
 				}
 
-
-				if (currentOperator != null)
-				{
-					leftNode = _nodeMapper[currentOperator].Invoke(leftNode, rightNode);
-				}
-				else
+				if (currentOperator is null)
 				{
 					throw new InvalidDiceExpressionException("Cannot get type of operator");
 				}
+
+				leftNode = _nodeMapper[currentOperator].Invoke(leftNode, rightNode);
 			}
 
 			return leftNode;
 		}
 
-		private INode ParseDice(IEnumerator<Token> tokens)
+		private INode ParseDiceKeep(IEnumerator<Token> tokens)
 		{
-			var leftNode = ParseLeaf(tokens);
+			var leftNode = ParseUnary(tokens);
 
 			while (_hasNext)
 			{
@@ -144,43 +142,74 @@ namespace RollOn
 
 				INode rightNode;
 				var currentOperator = tokens.Current?.GetType();
-				if (tokens.Current is DiceToken)
+				if (tokens.Current is DiceToken || tokens.Current is KeepToken)
 				{
 					MoveNext(tokens);
-					rightNode = ParseLeaf(tokens);
+					rightNode = ParseUnary(tokens);
 				}
 				else
 				{
 					return leftNode;
 				}
 
-
-				if (currentOperator != null)
-				{
-					leftNode = _nodeMapper[currentOperator].Invoke(leftNode, rightNode);
-				}
-				else
+				if (currentOperator is null)
 				{
 					throw new InvalidDiceExpressionException("Cannot get type of operator");
 				}
+			
+				leftNode = _nodeMapper[currentOperator].Invoke(leftNode, rightNode);
 			}
 
 			return leftNode;
 		}
-		
+
+		private INode ParseUnary(IEnumerator<Token> tokens)
+		{
+			while (_hasNext)
+			{
+				if (tokens.Current is AddToken)
+				{
+					MoveNext(tokens);
+					continue;
+				}
+
+				if (tokens.Current is SubtractToken)
+				{
+					MoveNext(tokens);
+
+					var rightNode = ParseUnary(tokens);
+
+					return _nodeFactory.CreateUnary(rightNode);
+				}
+
+				return ParseLeaf(tokens);
+			}
+
+			return null;
+		}
+
 		private INode ParseLeaf(IEnumerator<Token> tokens)
 		{
-			if (tokens.Current is ConstantToken token)
+			if (tokens.Current is NumberToken numberToken)
 			{
-				var node =  new NumberNode(token.Constant);
+				var node = _nodeFactory.CreateNumber(numberToken.Constant);
+				MoveNext(tokens);
+				return node;
+			}
+
+			if (tokens.Current is VariableToken)
+			{
+				var node = _nodeFactory.CreateVariable(tokens.Current.Value);
 				MoveNext(tokens);
 				return node;
 			}
 
 			if (tokens.Current is OpenParenthesisToken)
 			{
+				// Skip token
 				MoveNext(tokens);
 
+				// Parse sub expression
 				var node = ParseAddSubtract(tokens);
 
 				if (!(tokens.Current is CloseParenthesisToken))
@@ -188,6 +217,7 @@ namespace RollOn
 					throw new InvalidDiceExpressionException("Close parenthesis not present");
 				}
 
+				// Skip over close parenthesis
 				MoveNext(tokens);
 
 				return node;

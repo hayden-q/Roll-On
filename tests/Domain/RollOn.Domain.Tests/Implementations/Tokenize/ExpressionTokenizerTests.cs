@@ -2,7 +2,7 @@
 using FluentAssertions;
 using Xunit;
 
-namespace RollOn.Tests.Tokenize
+namespace RollOn.Tests
 {
 	public class ExpressionTokenizerTests
 	{
@@ -14,7 +14,7 @@ namespace RollOn.Tests.Tokenize
 		public void Tokenize_InputIsNumber_ReturnsTokenWithNumber(string expression)
 		{
 			// Arrange
-			var expected = new[] {new ConstantToken(expression)};
+			var expected = new[] {new NumberToken(expression)};
 			var sut = new ExpressionTokenizer();
 
 			// Act
@@ -106,13 +106,13 @@ namespace RollOn.Tests.Tokenize
 			const string expression = "1+2-3*4.5";
 			Token[] expected = 
 			{
-				new ConstantToken("1"),
+				new NumberToken("1"),
 				new AddToken(), 
-				new ConstantToken("2"),
+				new NumberToken("2"),
 				new SubtractToken(), 
-				new ConstantToken("3"),
+				new NumberToken("3"),
 				new MultiplyToken(), 
-				new ConstantToken("4.5"),
+				new NumberToken("4.5"),
 			};
 			var sut = new ExpressionTokenizer();
 
@@ -121,6 +121,51 @@ namespace RollOn.Tests.Tokenize
 
 			// Assert
 			result.Should().BeEquivalentTo(expected);
+		}
+
+		[Fact]
+		public void Tokenize_InputIsVariable_ReturnsVariableToken()
+		{
+			// Arrange
+			const string expression = "{Variable_Name}";
+			var expected = new[] {new VariableToken("Variable_Name"),};
+			var sut = new ExpressionTokenizer();
+
+			// Act
+			var result = sut.Tokenize(expression);
+
+			// Assert
+			result.Should().BeEquivalentTo(expected);
+		}
+
+		[Fact]
+		public void Tokenize_InputIsEmptyVariable_ThrowsException()
+		{
+			// Arrange
+			const string expression = "{}";
+			var sut = new ExpressionTokenizer();
+
+			// Act
+			Action action = () => sut.Tokenize(expression);
+
+			// Assert
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Variable name cannot be empty");
+		}
+
+		[Fact]
+		public void Tokenize_InputIsUnclosedVariableBracket_ThrowsException()
+		{
+			// Arrange
+			const string expression = "1+{First";
+			var sut = new ExpressionTokenizer();
+
+			// Act
+			Action action = () => sut.Tokenize(expression);
+
+			// Assert
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Variable name doesn't have closed brackets.");
 		}
 
 		[Fact]

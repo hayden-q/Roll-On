@@ -1,6 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Runtime.ExceptionServices;
+using System.Linq;
 
 namespace RollOn
 {
@@ -17,35 +16,41 @@ namespace RollOn
 
 		public static DiceResult operator +(DiceResult first, DiceResult second)
 		{
-			return new DiceResult(first.Value + second.Value, Concatenate(first, second));
+			return new DiceResult(first.Value + second.Value, Concatenate(first.Rolls, second.Rolls));
 		}
 
 		public static DiceResult operator -(DiceResult first, DiceResult second)
 		{
-			return new DiceResult(first.Value - second.Value, Concatenate(first, second));
+			return new DiceResult(first.Value - second.Value, Concatenate(first.Rolls, second.Rolls));
 		}
 
 		public static DiceResult operator *(DiceResult first, DiceResult second)
 		{
-			return new DiceResult(first.Value * second.Value, Concatenate(first, second));
+			return new DiceResult(first.Value * second.Value, Concatenate(first.Rolls, second.Rolls));
 		}
 
 		public static DiceResult operator /(DiceResult first, DiceResult second)
 		{
-			return new DiceResult(first.Value / second.Value, Concatenate(first, second));
+			return new DiceResult(first.Value / second.Value, Concatenate(first.Rolls, second.Rolls));
 		}
 
-		private static IEnumerable<IEnumerable<DiceRoll>> Concatenate(DiceResult first, DiceResult second)
+		public static DiceResult Merge(DiceResult count, DiceResult dice, DiceResult size)
 		{
-			foreach (var roll in first.Rolls)
-			{
-				yield return roll;
-			}
+			var rolls = Concatenate(count.Rolls, size.Rolls, dice.Rolls);
 
-			foreach (var roll in second.Rolls)
-			{
-				yield return roll;
-			}
+			return new DiceResult(dice.Value, rolls);
+		}
+
+		public static DiceResult Merge(DiceResult dice, DiceResult keep)
+		{
+			var rolls = Concatenate(keep.Rolls, dice.Rolls);
+
+			return new DiceResult(dice.Value, rolls);
+		}
+
+		private static IEnumerable<IEnumerable<DiceRoll>> Concatenate(params IEnumerable<IEnumerable<DiceRoll>>[] rollArray)
+		{
+			return rollArray?.Where(rolls => rolls != null).SelectMany(rolls => rolls);
 		}
 
 		protected override IEnumerable<object> GetAtomicValues()
