@@ -6,6 +6,13 @@ namespace RollOn.Tests
 {
 	public class DiceParserTests
 	{
+		private readonly IRoller _roller;
+
+		public DiceParserTests()
+		{
+			_roller = new MaxRollerStub();
+		}
+		
 		[Fact]
 		public void Parse_ShouldCallTokenizer_WhenCallingParse()
 		{
@@ -31,7 +38,10 @@ namespace RollOn.Tests
 			var expected = new NumberNode(parameter);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] {new ConstantToken(parameter.ToString()),});
+				.Returns(new[]
+				{
+					new ConstantToken(parameter.ToString()),
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -49,7 +59,12 @@ namespace RollOn.Tests
 			var expected = new AddNode(new NumberNode(1), new NumberNode(2));
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("1"), 
+					new AddToken(), 
+					new ConstantToken("2"),
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -67,7 +82,12 @@ namespace RollOn.Tests
 			var expected = new SubtractNode(new NumberNode(2), new NumberNode(1));
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("2"), 
+					new SubtractToken(), 
+					new ConstantToken("1"),
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -85,7 +105,14 @@ namespace RollOn.Tests
 			var expected = new AddNode(new SubtractNode(new NumberNode(3), new NumberNode(4)), new NumberNode(5));
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("3"), 
+					new SubtractToken(), 
+					new ConstantToken("4"),
+					new AddToken(), 
+					new ConstantToken("5"), 
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -103,7 +130,7 @@ namespace RollOn.Tests
 			var expected = new MultiplyNode(new NumberNode(4), new NumberNode(5));
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter.ToString()), });
+				.Returns(new Token[] { new ConstantToken("4"), new MultiplyToken(), new ConstantToken("5"),  });
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -121,7 +148,11 @@ namespace RollOn.Tests
 			var expected = new AddNode(new NumberNode(3), new MultiplyNode(new NumberNode(4), new NumberNode(5)));
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("3"), new AddToken(), new ConstantToken("4"), 
+					new MultiplyToken(), new ConstantToken("5"),
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -140,14 +171,29 @@ namespace RollOn.Tests
 			(
 				new AddNode
 				(
-					new NumberNode(1),
+					new NumberNode(1), 
 					new MultiplyNode(new NumberNode(2), new NumberNode(3))
-				),
-				new MultiplyNode(new NumberNode(4), new NumberNode(5))
+				), 
+				new MultiplyNode
+				(
+					new NumberNode(4),
+					new NumberNode(5)
+				)
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("1"),
+					new AddToken(), 
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"), 
+					new SubtractToken(),  
+					new ConstantToken("4"), 
+					new MultiplyToken(), 
+					new ConstantToken("5"),
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -173,19 +219,44 @@ namespace RollOn.Tests
 						(
 							new DivideNode
 							(
-								new MultiplyNode(new NumberNode(2), new NumberNode(3)),
+								new MultiplyNode
+								(
+									new NumberNode(2),
+									new NumberNode(3)
+								), 	
 								new NumberNode(4)
-							),
+							), 	
 							new NumberNode(5)
 						)
-					),
+					), 	
 					new NumberNode(1)
-				),
-				new DivideNode(new NumberNode(2), new NumberNode(3))
+				), 	
+				new DivideNode
+				(
+					new NumberNode(2),
+					new NumberNode(3)
+				)
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("1"),
+					new AddToken(), 
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+					new DivideToken(), 
+					new ConstantToken("4"),
+					new MultiplyToken(), 
+					new ConstantToken("5"),
+					new SubtractToken(), 
+					new ConstantToken("1"),
+					new AddToken(), 
+					new ConstantToken("2"),
+					new DivideToken(), 
+					new ConstantToken("3"),
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -211,19 +282,44 @@ namespace RollOn.Tests
 						(
 							new MultiplyNode
 							(
-								new MultiplyNode(new NumberNode(2), new NumberNode(3)),
+								new MultiplyNode
+								(
+									new NumberNode(2),
+									new NumberNode(3)
+								), 	
 								new NumberNode(4)
-							),
+							), 	
 							new NumberNode(5)
 						)
-					),
+					), 	
 					new NumberNode(1)
-				),
-				new MultiplyNode(new NumberNode(2), new NumberNode(3))
+				), 	
+				new MultiplyNode
+				(
+					new NumberNode(2),
+					new NumberNode(3)
+				)
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("1"),
+					new AddToken(), 
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+					new MultiplyToken(), 
+					new ConstantToken("4"),
+					new MultiplyToken(), 
+					new ConstantToken("5"),
+					new SubtractToken(), 
+					new ConstantToken("1"),
+					new AddToken(), 
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -253,7 +349,22 @@ namespace RollOn.Tests
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new OpenParenthesisToken(),
+					new OpenParenthesisToken(), 
+					new ConstantToken("1"),
+					new AddToken(), 
+					new ConstantToken("2"),
+					new CloseParenthesisToken(), 
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+					new SubtractToken(), 
+					new ConstantToken("4"),
+					new CloseParenthesisToken(), 
+					new MultiplyToken(), 
+					new ConstantToken("5"), 
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -289,7 +400,18 @@ namespace RollOn.Tests
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("1"),
+					new DiceToken(), 
+					new ConstantToken("8"),
+					new AddToken(), 
+					new ConstantToken("1"),
+					new DiceToken(), 
+					new ConstantToken("6"),
+					new MultiplyToken(), 
+					new ConstantToken("2"), 
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -307,7 +429,16 @@ namespace RollOn.Tests
 			var expected = new DiceNode(new MultiplyNode(new NumberNode(2), new NumberNode(3)), new NumberNode(8));
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new OpenParenthesisToken(),
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+					new CloseParenthesisToken(), 
+					new DiceToken(), 
+					new ConstantToken("8"), 
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -329,7 +460,20 @@ namespace RollOn.Tests
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new OpenParenthesisToken(),
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+					new CloseParenthesisToken(), 
+					new DiceToken(), 
+					new ConstantToken("8"), 
+					new AddToken(), 
+					new ConstantToken("1"),
+					new DiceToken(), 
+					new ConstantToken("6"), 
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -351,7 +495,24 @@ namespace RollOn.Tests
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new OpenParenthesisToken(),
+					new OpenParenthesisToken(), 
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+					new CloseParenthesisToken(), 
+					new DiceToken(),
+					new ConstantToken("4"), 
+					new CloseParenthesisToken(), 
+					new DiceToken(), 
+					new ConstantToken("8"), 
+					new AddToken(), 
+					new ConstantToken("1"),
+					new DiceToken(), 
+					new ConstantToken("6"), 
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -373,7 +534,20 @@ namespace RollOn.Tests
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("1"),
+					new DiceToken(), 
+					new ConstantToken("8"),
+					new AddToken(), 
+					new ConstantToken("1"),
+					new DiceToken(), 
+					new OpenParenthesisToken(), 
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+					new CloseParenthesisToken(), 
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -395,7 +569,24 @@ namespace RollOn.Tests
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new ConstantToken("1"),
+					new DiceToken(), 
+					new ConstantToken("8"),
+					new AddToken(), 
+					new ConstantToken("1"),
+					new DiceToken(), 
+					new OpenParenthesisToken(), 
+					new OpenParenthesisToken(), 
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+					new CloseParenthesisToken(),
+					new DiceToken(), 
+					new ConstantToken("4"),
+					new CloseParenthesisToken(), 
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act
@@ -418,7 +609,24 @@ namespace RollOn.Tests
 			);
 			var tokenizer = new Mock<IExpressionTokenizer>();
 			tokenizer.Setup(token => token.Tokenize(It.IsAny<string>()))
-				.Returns(new[] { new ConstantToken(parameter), });
+				.Returns(new Token[]
+				{
+					new OpenParenthesisToken(), 
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("3"),
+					new CloseParenthesisToken(), 
+					new DiceToken(), 
+					new OpenParenthesisToken(), 
+					new ConstantToken("2"),
+					new MultiplyToken(), 
+					new ConstantToken("4"),
+					new CloseParenthesisToken(), 
+					new AddToken(), 
+					new ConstantToken("1"),
+					new DiceToken(), 
+					new ConstantToken("6"), 
+				});
 			var parser = new DiceParser(tokenizer.Object);
 
 			// Act

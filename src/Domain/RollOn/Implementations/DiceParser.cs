@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -5,140 +6,194 @@ namespace RollOn
 {
 	public class DiceParser : IDiceParser
 	{
+		private bool _hasNext = true;
 		private readonly IExpressionTokenizer _tokenizer;
-
+		private readonly Dictionary<Type, Func<INode, INode, INode>> _nodeMapper;
+		
 		public DiceParser() : this(new ExpressionTokenizer())
 		{
 		}
-		
+
 		public DiceParser(IExpressionTokenizer tokenizer)
 		{
 			_tokenizer = tokenizer;
+			
+			_nodeMapper = new Dictionary<Type, Func<INode, INode, INode>>
+			{
+				{typeof(AddToken), (left, right) => new AddNode(left, right)},
+				{typeof(SubtractToken), (left, right) => new SubtractNode(left, right)},
+				{typeof(MultiplyToken), (left, right) => new MultiplyNode(left, right)},
+				{typeof(DivideToken), (left, right) => new DivideNode(left, right)},
+				{typeof(DiceToken), (left, right) => new DiceNode(left, right)},
+			};
 		}
 
 		public INode Parse(string expression)
 		{
 			var tokens = _tokenizer.Tokenize(expression);
 
-			return ToNode(tokens);
+			return ParseTokens(tokens);
 		}
 
-		private INode ToNode(IEnumerable<Token> tokens)
+		private bool MoveNext(IEnumerator<Token> tokens)
 		{
+			_hasNext = tokens.MoveNext();
+			return _hasNext;
+		}
+
+		private INode ParseTokens(IEnumerable<Token> tokens)
+		{
+			if (!tokens.Any())
+			{
+				return null;
+			}
+			
 			using var enumerator = tokens.GetEnumerator();
 
-			return ParseAddSubtract(enumerator);
-		}
-
-        private INode ParseAddSubtract(IEnumerator<Token> tokens)
-        {
-            while (tokens.MoveNext())
-            {
-				var lhs = ParseMultiplyDivide(tokens);
-                // Work out the operator
-				INode operatorNode = null;
-                if (tokens.Current is AddToken)
-                {
-                    op = (a, b) => a + b;
-                }
-                else if (_tokenizer.Token == Token.Subtract)
-                {
-                    op = (a, b) => a - b;
-                }
-
-                // Binary operator found?
-                if (op == null)
-                    return lhs;             // no
-
-                // Skip the operator
-                _tokenizer.NextToken();
-
-                // Parse the right hand side of the expression
-                var rhs = ParseMultiplyDivide(tokens);
-
-                // Create a binary node and use it as the left-hand side from now on
-                lhs = new NodeBinary(lhs, rhs, op);
-            }
+			if (MoveNext(enumerator))
+			{
+				return ParseAddSubtract(enumerator);
+			}
 
 			return null;
 		}
 
-        // Parse an sequence of add/subtract operators
+		private INode ParseAddSubtract(IEnumerator<Token> tokens)
+		{
+			var leftNode = ParseMultiplyDivide(tokens);
+
+			while (_hasNext)
+			{
+				if (!_hasNext)
+				{
+					return leftNode;
+				}
+
+				INode rightNode;
+				var currentOperator = tokens.Current?.GetType();
+				if (tokens.Current is AddToken || tokens.Current is SubtractToken)
+				{
+					MoveNext(tokens);
+					rightNode = ParseMultiplyDivide(tokens);
+				}
+				else
+				{
+					return leftNode;
+				}
+
+				if (currentOperator != null)
+				{
+					leftNode = _nodeMapper[currentOperator].Invoke(leftNode, rightNode);
+				}
+				else
+				{
+					throw new InvalidDiceExpressionException("Cannot get type of operator");
+				}
+			}
+
+			return leftNode;
+		}
+
 		private INode ParseMultiplyDivide(IEnumerator<Token> tokens)
-        {
-            // Parse the left hand side
-            var lhs = ParseUnary(tokens);
+		{
+			var leftNode = ParseDice(tokens);
 
-            while (true)
-            {
-                // Work out the operator
-                Func<double, double, double> op = null;
-                if (_tokenizer.Token == Token.Multiply)
-                {
-                    op = (a, b) => a * b;
-                }
-                else if (_tokenizer.Token == Token.Divide)
-                {
-                    op = (a, b) => a / b;
-                }
+			while (_hasNext)
+			{
+				if (!_hasNext)
+				{
+					return leftNode;
+				}
 
-                // Binary operator found?
-                if (op == null)
-                    return lhs;             // no
-
-                // Skip the operator
-                _tokenizer.NextToken();
-
-                // Parse the right hand side of the expression
-                var rhs = ParseUnary(tokens);
-
-                // Create a binary node and use it as the left-hand side from now on
-                lhs = new NodeBinary(lhs, rhs, op);
-            }
-        }
+				INode rightNode;
+				var currentOperator = tokens.Current?.GetType();
+				if (tokens.Current is MultiplyToken || tokens.Current is DivideToken)
+				{
+					MoveNext(tokens);
+					rightNode = ParseDice(tokens);
+				}
+				else
+				{
+					return leftNode;
+				}
 
 
-        // Parse a unary operator (eg: negative/positive)
-		private INode ParseUnary(IEnumerator<Token> tokens)
-        {
-            while (true)
-            {
-                // Positive operator is a no-op so just skip it
-                if (_tokenizer.Token == Token.Add)
-                {
-                    // Skip
-                    _tokenizer.NextToken();
-                    continue;
-                }
+				if (currentOperator != null)
+				{
+					leftNode = _nodeMapper[currentOperator].Invoke(leftNode, rightNode);
+				}
+				else
+				{
+					throw new InvalidDiceExpressionException("Cannot get type of operator");
+				}
+			}
 
-                // Negative operator
-                if (_tokenizer.Token == Token.Subtract)
-                {
-                    // Skip
-                    _tokenizer.NextToken();
+			return leftNode;
+		}
 
-                    // Parse RHS 
-                    // Note this recurses to self to support negative of a negative
-                    var rhs = ParseUnary();
+		private INode ParseDice(IEnumerator<Token> tokens)
+		{
+			var leftNode = ParseLeaf(tokens);
 
-                    // Create unary node
-                    return new NodeUnary(rhs, (a) => -a);
-                }
+			while (_hasNext)
+			{
+				if (!_hasNext)
+				{
+					return leftNode;
+				}
 
-                // No positive/negative operator so parse a leaf node
-                return ParseLeaf(tokens);
-            }
-        }
+				INode rightNode;
+				var currentOperator = tokens.Current?.GetType();
+				if (tokens.Current is DiceToken)
+				{
+					MoveNext(tokens);
+					rightNode = ParseLeaf(tokens);
+				}
+				else
+				{
+					return leftNode;
+				}
 
-        private INode ParseLeaf(IEnumerator<Token> tokens)
+
+				if (currentOperator != null)
+				{
+					leftNode = _nodeMapper[currentOperator].Invoke(leftNode, rightNode);
+				}
+				else
+				{
+					throw new InvalidDiceExpressionException("Cannot get type of operator");
+				}
+			}
+
+			return leftNode;
+		}
+		
+		private INode ParseLeaf(IEnumerator<Token> tokens)
 		{
 			if (tokens.Current is ConstantToken token)
 			{
-				var node = new NumberNode(token.Constant);
+				var node =  new NumberNode(token.Constant);
+				MoveNext(tokens);
+				return node;
+			}
+
+			if (tokens.Current is OpenParenthesisToken)
+			{
+				MoveNext(tokens);
+
+				var node = ParseAddSubtract(tokens);
+
+				if (!(tokens.Current is CloseParenthesisToken))
+				{
+					throw new InvalidDiceExpressionException("Close parenthesis not present");
+				}
+
+				MoveNext(tokens);
+
 				return node;
 			}
 
 			throw new InvalidDiceExpressionException($"Unexpected token: {tokens.Current.Value}");
 		}
-    }
+	}
 }

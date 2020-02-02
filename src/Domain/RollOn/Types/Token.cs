@@ -12,8 +12,6 @@ namespace RollOn
 			Value = value;
 		}
 
-		public abstract bool InputIsToken(string input);
-
 		protected override IEnumerable<object> GetAtomicValues()
 		{
 			yield return Value;
@@ -33,8 +31,20 @@ namespace RollOn
 
 			Constant = constant;
 		}
+	}
 
-		public override bool InputIsToken(string input) => double.TryParse(input, out _);
+	public class OpenParenthesisToken : Token
+	{
+		public OpenParenthesisToken() : base("(")
+		{
+		}
+	}
+
+	public class CloseParenthesisToken : Token
+	{
+		public CloseParenthesisToken() : base(")")
+		{
+		}
 	}
 
 	public abstract class OperatorToken : Token
@@ -42,14 +52,15 @@ namespace RollOn
 		protected OperatorToken(string value) : base(value)
 		{
 		}
-
-		public override bool InputIsToken(string input) => string.Equals(input.Trim(), Value.Trim(), StringComparison.OrdinalIgnoreCase);
+		
+		public int Precedence { get; protected set; }
 	}
 
 	public class AddToken : OperatorToken
 	{
 		public AddToken() : base("+")
 		{
+			Precedence = 1;
 		}
 	}
 
@@ -57,6 +68,7 @@ namespace RollOn
 	{
 		public SubtractToken() : base("-")
 		{
+			Precedence = 1;
 		}
 	}
 
@@ -64,6 +76,7 @@ namespace RollOn
 	{
 		public MultiplyToken() : base("*")
 		{
+			Precedence = 2;
 		}
 	}
 
@@ -71,6 +84,7 @@ namespace RollOn
 	{
 		public DivideToken() : base("/")
 		{
+			Precedence = 2;
 		}
 	}
 
@@ -78,6 +92,7 @@ namespace RollOn
 	{
 		public DiceToken() : base("D")
 		{
+			Precedence = 3;
 		}
 	}
 }

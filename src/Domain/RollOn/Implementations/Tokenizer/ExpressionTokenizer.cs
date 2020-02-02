@@ -20,6 +20,8 @@ namespace RollOn
 				{ '/', tokens => {tokens.Add(new DivideToken());} },
 				{ 'D', tokens => {tokens.Add(new DiceToken());} },
 				{ 'd', tokens => {tokens.Add(new DiceToken());} },
+				{ '(', tokens => {tokens.Add(new OpenParenthesisToken());} },
+				{ ')', tokens => {tokens.Add(new CloseParenthesisToken());} },
 			};
 		}
 
@@ -36,7 +38,7 @@ namespace RollOn
 				{
 					_reader.Read();
 				}
-				else if (char.IsDigit(character))
+				else if (char.IsDigit(character) || character == '.')
 				{
 					tokens.Add(new ConstantToken(ParseNumber()));
 				}
