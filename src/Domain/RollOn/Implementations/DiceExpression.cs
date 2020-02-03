@@ -11,7 +11,7 @@ namespace RollOn
 			_node = node ?? throw new ArgumentNullException(nameof(node), "Node must be set.");
 		}
 
-		public DiceResult Evaluate(IRoller roller, IVariableInjector variableInjector, RoundingMode roundingMode)
+		public DiceResult Evaluate(IRoller roller, IVariableInjector variableInjector, RoundingMode roundingMode = RoundingMode.None)
 		{
 			var result = _node.Evaluate(roller, variableInjector);
 

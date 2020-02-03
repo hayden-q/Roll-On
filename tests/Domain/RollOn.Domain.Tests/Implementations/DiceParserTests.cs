@@ -1,36 +1,24 @@
 ﻿using FluentAssertions;
 using Moq;
+using System;
 using Xunit;
 
 namespace RollOn.Tests
 {
 	public class DiceParserTests
 	{
-		private readonly IRoller _roller;
-		private readonly Mock<INodeFactory> _nodeFactory;
+		private readonly IPrecedenceHandler _precedenceHandler;
 
 		public DiceParserTests()
 		{
-			_roller = new MaxRollerStub();
-			_nodeFactory = new Mock<INodeFactory>();
-			_nodeFactory.Setup(factory => factory.CreateNumber(It.IsAny<double>()))
-				.Returns<double>(number => new NumberNodeStub(number));
-			_nodeFactory.Setup(factory => factory.CreateVariable(It.IsAny<string>()))
-				.Returns<string>(name => new VariableNodeStub(name));
-			_nodeFactory.Setup(factory => factory.CreateUnary(It.IsAny<INode>()))
-				.Returns<INode>(node => new UnaryNodeStub(node));
-			_nodeFactory.Setup(factory => factory.CreateAdd(It.IsAny<INode>(), It.IsAny<INode>()))
-				.Returns<INode, INode>((left, right) => new AddNodeStub(left, right));
-			_nodeFactory.Setup(factory => factory.CreateSubtract(It.IsAny<INode>(), It.IsAny<INode>()))
-				.Returns<INode, INode>((left, right) => new SubtractNodeStub(left, right));
-			_nodeFactory.Setup(factory => factory.CreateMultiply(It.IsAny<INode>(), It.IsAny<INode>()))
-				.Returns<INode, INode>((left, right) => new MultiplyNodeStub(left, right));
-			_nodeFactory.Setup(factory => factory.CreateDivide(It.IsAny<INode>(), It.IsAny<INode>()))
-				.Returns<INode, INode>((left, right) => new DivideNodeStub(left, right));
-			_nodeFactory.Setup(factory => factory.CreateDice(It.IsAny<INode>(), It.IsAny<INode>()))
-				.Returns<INode, INode>((count, size) => new DiceNodeStub(count, size));
-			_nodeFactory.Setup(factory => factory.CreateKeep(It.IsAny<IDiceNode>(), It.IsAny<INode>()))
-				.Returns<IDiceNode, INode>((dice, keep) => new KeepNodeStub(dice, keep));
+			var nodeFactory = new NodeFactoryStub();
+
+			_precedenceHandler = new PrecedenceHandler();
+			_precedenceHandler.RegisterPrecedence(new OperatorPrecedence(nodeFactory, typeof(AddToken), typeof(SubtractToken)));
+			_precedenceHandler.RegisterPrecedence(new OperatorPrecedence(nodeFactory, typeof(MultiplyToken), typeof(DivideToken)));
+			_precedenceHandler.RegisterPrecedence(new DicePrecedence(nodeFactory));
+			_precedenceHandler.RegisterPrecedence(new UnaryPrecedence(nodeFactory));
+			_precedenceHandler.RegisterPrecedence(new OperandPrecedence(nodeFactory));
 		}
 		
 		[Fact]
@@ -39,7 +27,7 @@ namespace RollOn.Tests
 			// Arrange
 			const string parameter = "1";
 			var tokenizer = new Mock<IExpressionTokenizer>();
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			parser.Parse(parameter);
@@ -63,7 +51,7 @@ namespace RollOn.Tests
 				{
 					new NumberToken(parameter.ToString()),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter.ToString());
@@ -87,7 +75,7 @@ namespace RollOn.Tests
 					new AddToken(), 
 					new NumberToken("2"),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -110,7 +98,7 @@ namespace RollOn.Tests
 					new SubtractToken(), 
 					new NumberToken("1"),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -136,7 +124,7 @@ namespace RollOn.Tests
 					new AddToken(), 
 					new NumberToken("5"), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -160,7 +148,7 @@ namespace RollOn.Tests
 					new MultiplyToken(), 
 					new NumberToken("5"),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -186,7 +174,7 @@ namespace RollOn.Tests
 					new MultiplyToken(), 
 					new NumberToken("5"),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -216,7 +204,7 @@ namespace RollOn.Tests
 					new MultiplyToken(), 
 					new NumberToken("5"),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -252,7 +240,7 @@ namespace RollOn.Tests
 					new DivideToken(), 
 					new NumberToken("3"),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -288,7 +276,7 @@ namespace RollOn.Tests
 					new MultiplyToken(), 
 					new NumberToken("3"),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -322,7 +310,7 @@ namespace RollOn.Tests
 					new MultiplyToken(), 
 					new NumberToken("5"), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -348,7 +336,7 @@ namespace RollOn.Tests
 					new KeepToken(),
 					new NumberToken("3"), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -378,7 +366,7 @@ namespace RollOn.Tests
 					new MultiplyToken(), 
 					new NumberToken("2"), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -406,7 +394,7 @@ namespace RollOn.Tests
 					new DiceToken(), 
 					new NumberToken("8"), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -438,7 +426,7 @@ namespace RollOn.Tests
 					new DiceToken(), 
 					new NumberToken("6"), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -474,7 +462,7 @@ namespace RollOn.Tests
 					new DiceToken(), 
 					new NumberToken("6"), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -506,7 +494,7 @@ namespace RollOn.Tests
 					new NumberToken("3"),
 					new CloseParenthesisToken(), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -542,7 +530,7 @@ namespace RollOn.Tests
 					new NumberToken("4"),
 					new CloseParenthesisToken(), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -578,7 +566,7 @@ namespace RollOn.Tests
 					new DiceToken(), 
 					new NumberToken("6"), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -604,7 +592,7 @@ namespace RollOn.Tests
 					new DiceToken(),
 					new NumberToken("6"),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -630,7 +618,7 @@ namespace RollOn.Tests
 					new SubtractToken(), 
 					new NumberToken("10"), 
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
@@ -656,13 +644,160 @@ namespace RollOn.Tests
 					new DiceToken(), 
 					new NumberToken("8"),
 				});
-			var parser = new DiceParser(tokenizer.Object, _nodeFactory.Object);
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
 
 			// Act
 			var expression = parser.Parse(parameter);
 
 			// Assert
 			expression.ToString().Should().Be(expected);
+		}
+
+		[Fact]
+		public void Parse_KeepOperatorHasNoDiceOperator_ThrowsException()
+		{
+			// Arrange
+			const string parameter = "1D8K3+1K3";
+			var tokenizer = new Mock<IExpressionTokenizer>();
+			tokenizer
+				.Setup(token => token.Tokenize(It.IsAny<string>()))
+				.Returns(new Token[]
+				{
+					new NumberToken("1"),
+					new KeepToken(), 
+					new NumberToken("3"),
+				});
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
+
+			// Act
+			Action action = () => parser.Parse(parameter);
+
+			// Assert
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Keep operator must be preceded by the Dice Operator.");
+		}
+
+		[Fact]
+		public void Parse_ExpressionHasIllegalSequentialTokens_ThrowsException()
+		{
+			// Arrange
+			const string parameter = "1+*3";
+			var tokenizer = new Mock<IExpressionTokenizer>();
+			tokenizer
+				.Setup(token => token.Tokenize(It.IsAny<string>()))
+				.Returns(new Token[]
+				{
+					new NumberToken("1"),
+					new AddToken(), 
+					new MultiplyToken(), 
+					new NumberToken("3"),
+				});
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
+
+			// Act
+			Action action = () => parser.Parse(parameter);
+
+			// Assert
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Unexpected token: *");
+		}
+
+		[Fact]
+		public void Parse_NoNodeAfterOperator_OnlyReturnsLeftNode()
+		{
+			// Arrange
+			const string parameter = "1+";
+			const string expected = "1";
+			var tokenizer = new Mock<IExpressionTokenizer>();
+			tokenizer
+				.Setup(token => token.Tokenize(It.IsAny<string>()))
+				.Returns(new Token[]
+				{
+					new NumberToken("1"),
+					new AddToken(),
+				});
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
+
+			// Act
+			var expression = parser.Parse(parameter);
+
+			// Assert
+			expression.ToString().Should().Be(expected);
+		}
+
+		[Fact]
+		public void Parse_ExpressionHasBracketsNotClosed_ThrowsException()
+		{
+			// Arrange
+			const string parameter = "1+)(";
+			var tokenizer = new Mock<IExpressionTokenizer>();
+			tokenizer
+				.Setup(token => token.Tokenize(It.IsAny<string>()))
+				.Returns(new Token[]
+				{
+					new NumberToken("1"),
+					new AddToken(),
+					new CloseParenthesisToken(), 
+					new OpenParenthesisToken(), 
+				});
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
+
+			// Act
+			Action action = () => parser.Parse(parameter);
+
+			// Assert
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Unexpected token: )");
+		}
+
+		[Fact]
+		public void Parse_ExpressionHasEmptyBrackets_ThrowsException()
+		{
+			// Arrange
+			const string parameter = "1+()";
+			var tokenizer = new Mock<IExpressionTokenizer>();
+			tokenizer
+				.Setup(token => token.Tokenize(It.IsAny<string>()))
+				.Returns(new Token[]
+				{
+					new NumberToken("1"),
+					new AddToken(),
+					new OpenParenthesisToken(),
+					new CloseParenthesisToken(),
+				});
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
+
+			// Act
+			Action action = () => parser.Parse(parameter);
+
+			// Assert
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Unexpected token: )");
+		}
+
+		[Fact]
+		public void Parse_ExpressionHasNoClosedBracket_ThrowsException()
+		{
+			// Arrange
+			const string parameter = "(1+2";
+			var tokenizer = new Mock<IExpressionTokenizer>();
+			tokenizer
+				.Setup(token => token.Tokenize(It.IsAny<string>()))
+				.Returns(new Token[]
+				{
+					new OpenParenthesisToken(),
+					new NumberToken("1"),
+					new AddToken(),
+					new NumberToken("2"),
+				});
+			var parser = new DiceParser(tokenizer.Object, _precedenceHandler);
+
+			// Act
+			Action action = () => parser.Parse(parameter);
+
+			// Assert
+			action.Should().Throw<InvalidDiceExpressionException>()
+				.WithMessage("Close parenthesis not present");
 		}
 	}
 }

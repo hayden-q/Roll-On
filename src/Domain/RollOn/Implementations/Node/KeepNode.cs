@@ -22,7 +22,7 @@ namespace RollOn
 			var diceRolls = new List<DiceRoll>(diceResult.Rolls.Last());
 
 			var diceSum = diceRolls.Sum(roll => roll.Value);
-			var keepValue = keepResult.Value.Round(RoundingMode.Down);
+			var keepValue = keepResult.Value.RoundDown();
 
 			if (keepValue < 0)
 			{

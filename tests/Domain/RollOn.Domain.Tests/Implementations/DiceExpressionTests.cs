@@ -33,7 +33,7 @@ namespace RollOn.Tests
 			var expected = new DiceResult(value, Enumerable.Empty<IEnumerable<DiceRoll>>());
 
 			// Act
-			var sut = expression.Evaluate(new MaxRollerStub(), MockHelper.CreateMockedInjector().Object, RoundingMode.Default);
+			var sut = expression.Evaluate(new MaxRollerStub(), MockHelper.CreateMockedInjector().Object, RoundingMode.None);
 
 			// Assert
 			sut.Should().Be(expected);

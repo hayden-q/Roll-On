@@ -22,7 +22,7 @@ namespace RollOn
 			var countSign = count.Value < 0 ? -1 : 1;
 
 			var rolls = roller
-				.Roll(count.Value.Round(RoundingMode.Down), size.Value.Round(RoundingMode.Down))
+				.Roll(count.Value.RoundDown(), size.Value.RoundDown())
 				.OrderByDescending(roll => roll.Value)
 				.ToList();
 

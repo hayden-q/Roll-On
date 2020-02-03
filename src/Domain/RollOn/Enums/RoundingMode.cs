@@ -2,8 +2,9 @@ namespace RollOn
 {
 	public enum RoundingMode
 	{
-		Default = 0,
-		Down = 1,
-		Up = 2
+		None = 0,
+		Round = 1,
+		Down = 2,
+		Up = 3
 	}
 }
