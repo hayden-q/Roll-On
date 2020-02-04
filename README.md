@@ -7,7 +7,8 @@ Roll On is an open source library for creating and evaluating dice expressions, 
 
     
     IDiceParser parser = new DiceParser();
-    IDiceExpression expression = parser.Parse("5+4D6K3 * {Character Level} / --(2-1)d4");
+    INode node = parser.Parse("5+4D6K3 * {Character Level} / --(2-1)d4");
+    IDiceExpression expression = new DiceExpression(node);
    
     IRoller roller = new RandomRoller();
     IVariableInjector injector = new VariableInjector();
@@ -16,6 +17,11 @@ Roll On is an open source library for creating and evaluating dice expressions, 
     
     // result.Value [double] returns the result of the evaluation
     // result.Rolls [IEnumerable<IEnumerable<DiceRoll>>] displays all the rolls from the evaluation
+    
+## Installing
+Use the following command to install via NuGet
+
+    PM > Install-Package RollOn -Version 1.0.0
 
 ## Credits
  This project is largely inspired by [DiceNotation](https://github.com/eropple/DiceNotation) project by eropple, and [Writing a Simple Math Expression Engine in C#](https://medium.com/@toptensoftware/writing-a-simple-math-expression-engine-in-c-d414de18d4ce) by Brad Robinson.
