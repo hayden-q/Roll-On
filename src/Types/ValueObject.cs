@@ -7,7 +7,7 @@ namespace RollOn
 	{
 		protected abstract IEnumerable<object> GetAtomicValues();
 
-		public override bool Equals(object? obj)
+		public override bool Equals(object obj)
 		{
 			if (obj is null || obj.GetType() != GetType())
 			{
@@ -16,9 +16,13 @@ namespace RollOn
 
 			var other = (ValueObject) obj;
 
-			using var thisValues = GetAtomicValues().GetEnumerator();
-			using var otherValues = other.GetAtomicValues().GetEnumerator();
-			return CompareProperties(thisValues, otherValues);
+			using (var thisValues = GetAtomicValues().GetEnumerator())
+			{
+				using (var otherValues = other.GetAtomicValues().GetEnumerator())
+				{
+					return CompareProperties(thisValues, otherValues);
+				}
+			}
 		}
 
 		public override int GetHashCode()

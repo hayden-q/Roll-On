@@ -33,12 +33,14 @@ namespace RollOn
 			{
 				return null;
 			}
-			
-			using var enumerator = tokens.GetEnumerator().ToStateEnumerator();
 
-			if (enumerator.MoveNext())
+			using (var enumerator = tokens.GetEnumerator().ToStateEnumerator())
 			{
-				return _precedenceHandler.RecurseToFirst(enumerator);
+
+				if (enumerator.MoveNext())
+				{
+					return _precedenceHandler.RecurseToFirst(enumerator);
+				}
 			}
 
 			return null;

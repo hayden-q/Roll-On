@@ -11,12 +11,12 @@ namespace RollOn
 
 		public static double Round(this double number, RoundingMode roundingMode = RoundingMode.None)
 		{
-			return roundingMode switch
+			switch (roundingMode)
 			{
-				RoundingMode.Round => Math.Round(number),
-				RoundingMode.Down => Math.Floor(number),
-				RoundingMode.Up => Math.Ceiling(number),
-				_ => number,
+				case RoundingMode.Round: return Math.Round(number);
+				case RoundingMode.Down: return Math.Floor(number);
+				case RoundingMode.Up: return Math.Ceiling(number);
+				default: return number;
 			};
 		}
 	}
