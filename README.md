@@ -21,7 +21,7 @@ Roll On is an open source library for creating and evaluating dice expressions, 
 ## Installing
 Use the following command to install via NuGet
 
-    PM > Install-Package RollOn -Version 1.0.0
+    PM > Install-Package RollOn -Version 1.1.0
 
 ## Credits
  This project is largely inspired by [DiceNotation](https://github.com/eropple/DiceNotation) project by eropple, and [Writing a Simple Math Expression Engine in C#](https://medium.com/@toptensoftware/writing-a-simple-math-expression-engine-in-c-d414de18d4ce) by Brad Robinson.
